@@ -1,11 +1,11 @@
 provider "aws" {
-  region = "eu-central-1"
+  region = var.region
 }
 
 # Create a Key Pair using your existing SSH public key
 resource "aws_key_pair" "my_key" {
-  key_name   = "my-ssh-key"
-  public_key = file("~/.ssh/id_rsa.pub")
+  key_name   = var.key_name
+  public_key = file(var.public_key_path)
 }
 
 # Generate a random ID for uniqueness
@@ -33,23 +33,18 @@ resource "aws_security_group" "ssh_sg" {
   }
 }
 
-# Create an EC2 instance in eu-central-1
+# Create an EC2 instance
 resource "aws_instance" "ubuntu" {
-  ami                    = "ami-07eef52105e8a2059"  # Ubuntu 22.04 LTS for eu-central-1
-  instance_type          = "t2.micro"
-  key_name               = aws_key_pair.my_key.key_name
-  vpc_security_group_ids = [aws_security_group.ssh_sg.id]
+  ami                    = var.ami_id  # Use a variable for the AMI ID
+  instance_type           = var.instance_type
+  key_name                = aws_key_pair.my_key.key_name
+  vpc_security_group_ids  = [aws_security_group.ssh_sg.id]
 
   root_block_device {
-    volume_size = 8  # 8GB EBS volume
+    volume_size = var.volume_size  # Use a variable for volume size
   }
 
   tags = {
-    Name = "MyUbuntuServer"
+    Name = var.instance_name
   }
 }
-
-output "instance_public_ip" {
-  value = aws_instance.ubuntu.public_ip
-}
-
